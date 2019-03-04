@@ -7,7 +7,7 @@
 
 import {Config, TestResult} from '@jest/types';
 
-import React, {Fragment} from 'react';
+import React from 'react';
 import {Color, Box, Text} from 'ink';
 import {pluralize} from 'jest-util';
 import {formatTestPath} from './utils';
@@ -21,9 +21,9 @@ export default ({
   globalConfig,
   updateCommand,
 }: {
-  snapshots: TestResult.SnapshotSummary,
-  globalConfig: Config.GlobalConfig,
-  updateCommand: string,
+  snapshots: TestResult.SnapshotSummary;
+  globalConfig: Config.GlobalConfig;
+  updateCommand: string;
 }) => (
   <Box flexDirection="column">
     <Text bold>Snapshot Summary</Text>
@@ -103,7 +103,7 @@ export default ({
       ))}
     {snapshots.unchecked &&
       snapshots.uncheckedKeysByFile.map(uncheckedFile => (
-        <Fragment>
+        <>
           <Box>
             &nbsp;&nbsp;
             {DOWN_ARROW}
@@ -111,14 +111,14 @@ export default ({
           </Box>
           <Box>
             {uncheckedFile.keys.map(key => (
-              <Fragment>
+              <>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 {DOT}
                 {key}
-              </Fragment>
+              </>
             ))}
           </Box>
-        </Fragment>
+        </>
       ))}
   </Box>
 );

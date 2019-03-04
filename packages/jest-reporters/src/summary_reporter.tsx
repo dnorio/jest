@@ -7,7 +7,7 @@
 
 import {TestResult, Config} from '@jest/types';
 import {testPathPatternToRegExp} from 'jest-util';
-import React from 'react';
+import React, {ReactNode} from 'react';
 import {Box, Color, Text, render} from 'ink';
 import {Context, ReporterOnStartOptions} from './types';
 import BaseReporter from './base_reporter';
@@ -49,9 +49,9 @@ const SnapshotHeader = ({
   globalConfig,
   paddingSummary,
 }: {
-  aggregatedResults: Config.AggregatedResult,
-  globalConfig: Config.GlobalConfig,
-  paddingSummary: boolean,
+  aggregatedResults: TestResult.AggregatedResult;
+  globalConfig: Config.GlobalConfig;
+  paddingSummary: boolean;
 }) => {
   // executed, re-print the failing results at the end of execution output.
   const failedTests = aggregatedResults.numFailedTests;
@@ -84,8 +84,8 @@ const SnapshotSummary = ({
   globalConfig,
   snapshots,
 }: {
-  globalConfig: Config.GlobalConfig,
-  snapshots: TestResult.SnapshotSummary,
+  globalConfig: Config.GlobalConfig;
+  snapshots: TestResult.SnapshotSummary;
 }) => {
   if (
     !(
@@ -151,7 +151,10 @@ export default class SummaryReporter extends BaseReporter {
     this._estimatedTime = options.estimatedTime;
   }
 
-  onRunComplete(contexts: Set<Context>, aggregatedResults: TestResult.AggregatedResult) {
+  onRunComplete(
+    contexts: Set<Context>,
+    aggregatedResults: TestResult.AggregatedResult,
+  ) {
     const {numTotalTestSuites, testResults, wasInterrupted} = aggregatedResults;
     if (numTotalTestSuites) {
       const lastResult = testResults[testResults.length - 1];
@@ -163,7 +166,7 @@ export default class SummaryReporter extends BaseReporter {
         !lastResult.numFailingTests &&
         !lastResult.testExecError;
 
-      const unmount = render(
+      const {unmount} = render(
         <Box flexDirection="column">
           <SnapshotHeader
             globalConfig={this._globalConfig}
@@ -206,7 +209,7 @@ export default class SummaryReporter extends BaseReporter {
     contexts: Set<Context>,
     globalConfig: Config.GlobalConfig,
   ) {
-    let testInfo = '';
+    let testInfo: ReactNode = '';
 
     if (globalConfig.runTestsByPath) {
       testInfo = <Color dim> within paths</Color>;
@@ -224,7 +227,7 @@ export default class SummaryReporter extends BaseReporter {
       );
     }
 
-    let nameInfo = '';
+    let nameInfo: ReactNode = '';
 
     if (globalConfig.runTestsByPath) {
       nameInfo = ' ' + globalConfig.nonFlagArgs.map(p => `"${p}"`).join(', ');

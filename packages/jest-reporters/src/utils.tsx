@@ -10,7 +10,7 @@ import {Config, TestResult} from '@jest/types';
 import chalk from 'chalk';
 import slash from 'slash';
 import {pluralize} from 'jest-util';
-import React, {PureComponent, Fragment} from 'react';
+import React, {PureComponent, FC} from 'react';
 import {Box, Color, Text} from 'ink';
 import {SummaryOptions} from './types';
 
@@ -34,12 +34,12 @@ export const FormattedPath = ({
   testPath,
   columns,
 }: {
-  pad: number,
-  config: Config.ProjectConfig | Config.GlobalConfig,
-  testPath: Config.Path,
-  columns: number,
+  pad: number;
+  config: Config.ProjectConfig | Config.GlobalConfig;
+  testPath: Config.Path;
+  columns?: number;
 }) => {
-  const maxLength = columns - pad;
+  const maxLength = (columns || 0) - pad;
   const relative = relativePath(config, testPath);
   const {basename} = relative;
   let {dirname} = relative;
@@ -48,10 +48,10 @@ export const FormattedPath = ({
   // length is ok
   if ((dirname + '/' + basename).length <= maxLength) {
     return (
-      <Fragment>
+      <>
         <Color dim>{dirname}/</Color>
         <Color bold>{basename}</Color>
-      </Fragment>
+      </>
     );
   }
 
@@ -62,19 +62,19 @@ export const FormattedPath = ({
     dirname =
       '…' + dirname.slice(dirname.length - dirnameLength, dirname.length);
     return (
-      <Fragment>
+      <>
         <Color dim>{dirname}/</Color>
         <Color bold>{basename}</Color>
-      </Fragment>
+      </>
     );
   }
 
   if (basenameLength + 4 === maxLength) {
     return (
-      <Fragment>
+      <>
         <Color dim>…/</Color>
         <Color bold>{basename}</Color>
-      </Fragment>
+      </>
     );
   }
 
@@ -110,18 +110,13 @@ export const relativePath = (
   return {basename, dirname};
 };
 
-export const getSummary = (
-  aggregatedResults: TestResult.AggregatedResult,
-  options?: SummaryOptions,
-};
-
 type SummaryProps = {
-  aggregatedResults: TestResult.AggregatedResult,
-  options?: SummaryOptions,
+  aggregatedResults: TestResult.AggregatedResult;
+  options?: SummaryOptions;
 };
 
 export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
-  interval: NodeJS.Timer;
+  interval?: NodeJS.Timer;
   constructor(props: SummaryProps) {
     super(props);
 
@@ -145,12 +140,15 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
       const runTime = this.getRuntime(this.props);
 
       this.setState({runTime});
-      // $FlowFixMe: `unref` exists in Node
-    }, 1000).unref();
+    }, 1000);
+
+    this.interval.unref();
   }
 
   componentWillUnmount() {
-    clearInterval(this.interval);
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
   }
 
   render() {
@@ -192,135 +190,131 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
           <Box flexDirection="column">
             <Box>
               {suitesFailed > 0 && (
-                <Fragment>
+                <>
                   <Color bold red>
                     {suitesFailed} failed
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {suitesPending > 0 && (
-                <Fragment>
+                <>
                   <Color bold yellow>
                     {suitesPending} skipped
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {suitesPassed > 0 && (
-                <Fragment>
+                <>
                   <Color bold green>
                     {suitesPassed} passed
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {suitesRun !== suitesTotal && suitesRun + ' of '}
               {suitesTotal} total
             </Box>
             <Box>
               {testsFailed > 0 && (
-                <Fragment>
+                <>
                   <Color bold red>
                     {testsFailed} failed
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {testsPending > 0 && (
-                <Fragment>
+                <>
                   <Color bold yellow>
                     {testsPending} skipped
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {testsTodo > 0 && (
-                <Fragment>
+                <>
                   <Color bold magenta>
                     {testsTodo} todo
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {testsPassed > 0 && (
-                <Fragment>
+                <>
                   <Color bold green>
                     {testsPassed} passed
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {testsTotal} total
             </Box>
             <Box>
               {snapshotsFailed > 0 && (
-                <Fragment>
+                <>
                   <Color bold red>
                     {snapshotsFailed} failed
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
-              {snapshotsOutdated > 0 &&
-                !snapshotsDidUpdate && (
-                  <Fragment>
-                    <Color bold yellow>
-                      {snapshotsOutdated} obsolete
-                    </Color>
-                    ,{' '}
-                  </Fragment>
-                )}
-              {snapshotsOutdated > 0 &&
-                snapshotsDidUpdate && (
-                  <Fragment>
-                    <Color bold green>
-                      {snapshotsOutdated} removed
-                    </Color>
-                    ,{' '}
-                  </Fragment>
-                )}
-              {snapshotsFilesRemoved > 0 &&
-                !snapshotsDidUpdate && (
-                  <Fragment>
-                    <Color bold yellow>
-                      {pluralize('file', snapshotsFilesRemoved)} obsolete
-                    </Color>
-                    ,{' '}
-                  </Fragment>
-                )}
-              {snapshotsFilesRemoved > 0 &&
-                snapshotsDidUpdate && (
-                  <Fragment>
-                    <Color bold green>
-                      {pluralize('file', snapshotsFilesRemoved)} removed
-                    </Color>
-                    ,{' '}
-                  </Fragment>
-                )}
+              {snapshotsOutdated > 0 && !snapshotsDidUpdate && (
+                <>
+                  <Color bold yellow>
+                    {snapshotsOutdated} obsolete
+                  </Color>
+                  ,{' '}
+                </>
+              )}
+              {snapshotsOutdated > 0 && snapshotsDidUpdate && (
+                <>
+                  <Color bold green>
+                    {snapshotsOutdated} removed
+                  </Color>
+                  ,{' '}
+                </>
+              )}
+              {snapshotsFilesRemoved > 0 && !snapshotsDidUpdate && (
+                <>
+                  <Color bold yellow>
+                    {pluralize('file', snapshotsFilesRemoved)} obsolete
+                  </Color>
+                  ,{' '}
+                </>
+              )}
+              {snapshotsFilesRemoved > 0 && snapshotsDidUpdate && (
+                <>
+                  <Color bold green>
+                    {pluralize('file', snapshotsFilesRemoved)} removed
+                  </Color>
+                  ,{' '}
+                </>
+              )}
               {snapshotsUpdated > 0 && (
-                <Fragment>
+                <>
                   <Color bold green>
                     {snapshotsUpdated} updated
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {snapshotsAdded > 0 && (
-                <Fragment>
+                <>
                   <Color bold green>
                     {snapshotsAdded} written
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {snapshotsPassed > 0 && (
-                <Fragment>
+                <>
                   <Color bold green>
                     {snapshotsPassed} passed
                   </Color>
                   ,{' '}
-                </Fragment>
+                </>
               )}
               {snapshotsTotal} total
             </Box>
@@ -337,7 +331,11 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
   }
 }
 
-const ProgressBar = ({estimatedTime, runTime, width}) => {
+const ProgressBar: FC<{
+  runTime: number;
+  estimatedTime: number;
+  width?: number;
+}> = ({estimatedTime, runTime, width}) => {
   // Only show a progress bar if the test run is actually going to take
   // some time.
   if (estimatedTime <= 2 || runTime >= estimatedTime || !width) {
@@ -362,7 +360,10 @@ const ProgressBar = ({estimatedTime, runTime, width}) => {
   );
 };
 
-const Time = ({runTime, estimatedTime}) => {
+const Time: FC<{runTime: number; estimatedTime: number}> = ({
+  runTime,
+  estimatedTime,
+}) => {
   // If we are more than one second over the estimated time, highlight it.
   const renderedTime =
     estimatedTime && runTime >= estimatedTime + 1 ? (
@@ -376,9 +377,7 @@ const Time = ({runTime, estimatedTime}) => {
   return (
     <Box>
       {renderedTime}
-      {runTime < estimatedTime && (
-        <Fragment>, estimated {estimatedTime}s</Fragment>
-      )}
+      {runTime < estimatedTime && <>, estimated {estimatedTime}s</>}
     </Box>
   );
 };

@@ -3,31 +3,24 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
- *
- * @flow
  */
 
-import type {AggregatedResult, TestResult} from 'types/TestResult';
-import type {GlobalConfig, Path, ProjectConfig} from 'types/Config';
-import type {Test} from 'types/TestRunner';
-import type {ReporterOnStartOptions} from 'types/Reporters';
-import type {ConsoleBuffer, LogType} from 'types/Console';
-
-import React, {Fragment, PureComponent} from 'react';
-import {render, Color, Box, Static, StdoutContext} from 'ink';
+import path from 'path';
+import React, {FC, Fragment, PureComponent} from 'react';
+import {Box, Color, ColorProps, render, Static, StdoutContext} from 'ink';
+import slash from 'slash';
+import {Config, TestResult} from '@jest/types';
+import {ConsoleBuffer, LogType} from '@jest/console';
 import BaseReporter from './base_reporter';
 import {FormattedPath, Summary} from './utils';
 import SnapshotStatus from './get_snapshot_status';
-import slash from 'slash';
-import path from 'path';
+import {ReporterOnStartOptions, Test} from './types';
 
 const TitleBullet = () => <Color bold>&#9679;</Color>;
 
 const DisplayName = ({
   displayName,
-}: {
-  displayName: $PropertyType<ProjectConfig, 'displayName'>,
-}) => {
+}: Pick<Config.ProjectConfig, 'displayName'>) => {
   if (!displayName) {
     return null;
   }
@@ -39,7 +32,7 @@ const DisplayName = ({
   );
 };
 
-const Status = ({children, ...props}) => (
+const Status: FC<ColorProps> = ({children, ...props}) => (
   <Color inverse bold {...props}>
     &nbsp;
     {children}
@@ -47,13 +40,13 @@ const Status = ({children, ...props}) => (
   </Color>
 );
 
-const Runs = () => <Status yellow>RUNS</Status>;
+const Runs: FC = () => <Status yellow>RUNS</Status>;
 
-const Fails = () => <Status red>FAIL</Status>;
+const Fails: FC = () => <Status red>FAIL</Status>;
 
-const Pass = () => <Status green>PASS</Status>;
+const Pass: FC = () => <Status green>PASS</Status>;
 
-const TestStatus = ({testResult}: {testResult: TestResult}) => {
+const TestStatus = ({testResult}: {testResult: TestResult.TestResult}) => {
   if (testResult.skipped) {
     return null;
   }
@@ -65,19 +58,19 @@ const TestStatus = ({testResult}: {testResult: TestResult}) => {
   return <Pass />;
 };
 
-const ColoredConsole = ({type, ...props}: {type: LogType}) => (
-  <Color yellow={type === 'warn'} red={type === 'error'} {...props} />
-);
+const ColoredConsole: FC<ColorProps & {type: LogType}> = ({
+  type,
+  ...props
+}: {
+  type: LogType;
+}) => <Color yellow={type === 'warn'} red={type === 'error'} {...props} />;
 
 const TestConsoleOutput = ({
   console,
   verbose,
   cwd,
-}: {
-  console: ?ConsoleBuffer,
-  verbose: $PropertyType<GlobalConfig, 'verbose'>,
-  cwd: $PropertyType<ProjectConfig, 'cwd'>,
-}) => {
+}: {console?: ConsoleBuffer | null} & Pick<Config.ProjectConfig, 'cwd'> &
+  Pick<Config.GlobalConfig, 'verbose'>) => {
   if (!console || console.length === 0) {
     return null;
   }
@@ -124,10 +117,13 @@ const CompletedTests = ({
   globalConfig,
   done,
 }: {
-  completedTests: Array<{testResult: TestResult, config: ProjectConfig}>,
-  width: number,
-  globalConfig: GlobalConfig,
-  done: boolean,
+  completedTests: Array<{
+    testResult: TestResult.TestResult;
+    config: Config.ProjectConfig;
+  }>;
+  width?: number;
+  globalConfig: Config.GlobalConfig;
+  done: boolean;
 }) => {
   if (completedTests.length === 0) {
     return null;
@@ -168,32 +164,37 @@ const CompletedTests = ({
 };
 
 type DateEvents =
-  | {|type: 'TestStart', payload: {|test: Test|}|}
-  | {|
-      type: 'TestResult',
-      payload: {|
-        aggregatedResults: AggregatedResult,
-        test: Test,
-        testResult: TestResult,
-      |},
-    |}
-  | {|type: 'TestComplete'|};
+  | {type: 'TestStart'; payload: {test: Test}}
+  | {
+      type: 'TestResult';
+      payload: {
+        aggregatedResults: TestResult.AggregatedResult;
+        test: Test;
+        testResult: TestResult.TestResult;
+      };
+    }
+  | {type: 'TestComplete'};
+
+type Props = {
+  register: (cb: (events: DateEvents) => void) => void;
+  aggregatedResults: TestResult.AggregatedResult;
+  globalConfig: Config.GlobalConfig;
+  options: ReporterOnStartOptions;
+};
 
 class Reporter extends PureComponent<
+  Props,
   {
-    register: any,
-    aggregatedResults: AggregatedResult,
-    globalConfig: GlobalConfig,
-    options: ReporterOnStartOptions,
-  },
-  {
-    aggregatedResults: AggregatedResult,
-    completedTests: Array<{testResult: TestResult, config: ProjectConfig}>,
-    currentTests: Array<[Path, ProjectConfig]>,
-    done: boolean,
-  },
+    aggregatedResults: TestResult.AggregatedResult;
+    completedTests: Array<{
+      testResult: TestResult.TestResult;
+      config: Config.ProjectConfig;
+    }>;
+    currentTests: Array<[Config.Path, Config.ProjectConfig]>;
+    done: boolean;
+  }
 > {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     props.register(this.onNewData.bind(this));
@@ -249,11 +250,10 @@ class Reporter extends PureComponent<
       <Box flexDirection="column">
         <StdoutContext.Consumer>
           {({stdout}: {stdout: typeof process.stdout}) => {
-            // $FlowFixMe
-            const width: number = stdout.columns;
+            const width = stdout.columns;
 
             return (
-              <Fragment>
+              <>
                 <CompletedTests
                   completedTests={completedTests}
                   width={width}
@@ -281,7 +281,7 @@ class Reporter extends PureComponent<
                     options={{estimatedTime, roundTime: true, width}}
                   />
                 )}
-              </Fragment>
+              </>
             );
           }}
         </StdoutContext.Consumer>
@@ -290,22 +290,22 @@ class Reporter extends PureComponent<
   }
 }
 
-export default class DefaultReporter extends BaseReporter {
-  _globalConfig: GlobalConfig;
-  _components: Array<(DateEvents) => void>;
-  _unmount: () => void;
+export default class ReactReporter extends BaseReporter {
+  _globalConfig: Config.GlobalConfig;
+  _components: Array<(events: DateEvents) => void>;
+  _unmount?: () => void;
 
-  constructor(globalConfig: GlobalConfig) {
+  constructor(globalConfig: Config.GlobalConfig) {
     super();
     this._globalConfig = globalConfig;
     this._components = [];
   }
 
   onRunStart(
-    aggregatedResults: AggregatedResult,
+    aggregatedResults: TestResult.AggregatedResult,
     options: ReporterOnStartOptions,
   ) {
-    this._unmount = render(
+    const {unmount} = render(
       <Reporter
         register={cb => this._components.push(cb)}
         aggregatedResults={aggregatedResults}
@@ -313,6 +313,8 @@ export default class DefaultReporter extends BaseReporter {
         globalConfig={this._globalConfig}
       />,
     );
+
+    this._unmount = unmount;
   }
 
   onTestStart(test: Test) {
@@ -321,8 +323,8 @@ export default class DefaultReporter extends BaseReporter {
 
   onTestResult(
     test: Test,
-    testResult: TestResult,
-    aggregatedResults: AggregatedResult,
+    testResult: TestResult.TestResult,
+    aggregatedResults: TestResult.AggregatedResult,
   ) {
     this._components.forEach(cb =>
       cb({payload: {aggregatedResults, test, testResult}, type: 'TestResult'}),
@@ -331,6 +333,8 @@ export default class DefaultReporter extends BaseReporter {
 
   onRunComplete() {
     this._components.forEach(cb => cb({type: 'TestComplete'}));
-    this._unmount();
+    if (this._unmount) {
+      this._unmount();
+    }
   }
 }

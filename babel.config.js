@@ -1,0 +1,30 @@
+// Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
+
+module.exports = {
+  babelrcRoots: ['examples/*'],
+  overrides: [
+    {
+      presets: ['@babel/preset-flow'],
+      test: '**/*.js',
+    },
+    {
+      plugins: [
+        'babel-plugin-typescript-strip-namespaces',
+        require.resolve(
+          './scripts/babel-plugin-jest-replace-ts-export-assignment.js'
+        ),
+      ],
+      presets: ['@babel/preset-typescript'],
+      test: /\.tsx?$/,
+    },
+  ],
+  plugins: [
+    ['@babel/plugin-transform-modules-commonjs', {allowTopLevelThis: true}],
+    '@babel/plugin-transform-strict-mode',
+    '@babel/plugin-proposal-object-rest-spread',
+  ],
+  presets: [
+    ['@babel/preset-env', {shippedProposals: true, targets: {node: 6}}],
+    '@babel/preset-react',
+  ],
+};

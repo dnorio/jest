@@ -154,9 +154,9 @@ jest.mock(
   '../moduleName',
   () => {
     /*
-   * Custom implementation of a module that doesn't exist in JS,
-   * like a generated module or a native module in react-native.
-   */
+     * Custom implementation of a module that doesn't exist in JS,
+     * like a generated module or a native module in react-native.
+     */
   },
   {virtual: true},
 );
@@ -264,6 +264,19 @@ test('works too', () => {
 ```
 
 Returns the `jest` object for chaining.
+
+### `jest.isolateModules(fn)`
+
+`jest.isolateModules(fn)` goes a step further than `jest.resetModules()` and creates a sandbox registry for the modules that are loaded inside the callback function. This is useful to isolate specific modules for every test so that local module state doesn't conflict between tests.
+
+```js
+let myModule;
+jest.isolateModules(() => {
+  myModule = require('myModule');
+});
+
+const otherCopyOfMyModule = require('myModule');
+```
 
 ## Mock functions
 
@@ -415,9 +428,9 @@ When this API is called, all pending micro-tasks that have been queued via `proc
 
 ### `jest.runAllTimers()`
 
-Exhausts the **macro**-task queue (i.e., all tasks queued by `setTimeout()`, `setInterval()`, and `setImmediate()`).
+Exhausts both the **macro**-task queue (i.e., all tasks queued by `setTimeout()`, `setInterval()`, and `setImmediate()`) and the **micro**-task queue (usually interfaced in node via `process.nextTick`).
 
-When this API is called, all pending "macro-tasks" that have been queued via `setTimeout()` or `setInterval()` will be executed. Additionally if those macro-tasks themselves schedule new macro-tasks, those will be continually exhausted until there are no more macro-tasks remaining in the queue.
+When this API is called, all pending macro-tasks and micro-tasks will be executed. If those tasks themselves schedule new tasks, those will be continually exhausted until there are no more tasks remaining in the queue.
 
 This is often useful for synchronously executing setTimeouts during a test in order to synchronously assert about some behavior that would only happen after the `setTimeout()` or `setInterval()` callbacks executed. See the [Timer mocks](TimerMocks.md) doc for more information.
 

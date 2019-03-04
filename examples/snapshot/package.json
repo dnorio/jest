@@ -6,12 +6,12 @@
     "react": "*"
   },
   "devDependencies": {
+    "@babel/core": "*",
+    "@babel/preset-env": "*",
+    "@babel/preset-react": "*",
     "babel-jest": "*",
-    "babel-preset-env": "*",
-    "babel-preset-react": "*",
     "jest": "*",
-    "react-test-renderer": "*",
-    "regenerator-runtime": "*"
+    "react-test-renderer": "*"
   },
   "scripts": {
     "test": "jest"

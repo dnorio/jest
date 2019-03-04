@@ -12,3 +12,4 @@ export {default as NotifyReporter} from './notify_reporter';
 export {default as SummaryReporter} from './summary_reporter';
 export {default as ReactReporter} from './react_reporter';
 export {default as VerboseReporter} from './verbose_reporter';
+export {Reporter, ReporterOnStartOptions} from './types';

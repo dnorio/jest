@@ -18,7 +18,7 @@ import {
   ReactReporter,
   SummaryReporter,
   VerboseReporter,
-  // @ts-ignore: Not migrated to TS
+  Reporter,
 } from '@jest/reporters';
 import exit from 'exit';
 import {
@@ -29,7 +29,6 @@ import {
 import ReporterDispatcher from './ReporterDispatcher';
 import TestWatcher from './TestWatcher';
 import {shouldRunInBand} from './testSchedulerHelper';
-import {Reporter} from './types';
 
 // The default jest-runner is required because it is the default test runner
 // and required implicitly through the `runner` ProjectConfig option.

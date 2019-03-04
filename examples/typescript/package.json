@@ -12,7 +12,7 @@
     "@babel/preset-env": "*",
     "@babel/preset-react": "*",
     "@babel/preset-typescript": "*",
-    "@types/jest": "^24.0.0",
+    "@types/jest": "*",
     "babel-jest": "*",
     "jest": "*"
   },

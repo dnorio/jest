@@ -6970,11 +6970,12 @@ ink-text-input@^3.0.0:
   dependencies:
     prop-types "^15.5.10"
 
-ink@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/ink/-/ink-2.0.0.tgz#e543b786e3eb33fd78f17b1c009e954557b25c6b"
-  integrity sha512-kCt9ucBO+0NRkzcsXhAbYC7n9q+EOfl4jl0XsoFtMjv3jCE0a7tn8FMkzlMvXurrMWvFXLlBaIe0ErnMrQNsRQ==
+ink@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/ink/-/ink-2.0.3.tgz#be59b501398a0cf8b18d8ee26cee060a126c25a2"
+  integrity sha512-xnB7jKEyXFmEHvx9dVvfmsjhjcN8r8c/gloxFvh6S4mhhyyLiKpV+Y18atFyRxuQnACF077zlPZXDNrHQGkcrw==
   dependencies:
+    "@types/react" "^16.8.6"
     arrify "^1.0.1"
     auto-bind "^2.0.0"
     chalk "^2.4.1"

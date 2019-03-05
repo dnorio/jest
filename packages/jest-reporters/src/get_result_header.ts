@@ -54,7 +54,7 @@ export default (
 
   return (
     `${status} ${projectDisplayName}${formatTestPath(
-      projectConfig || globalConfig,
+      projectConfig ? projectConfig : globalConfig,
       testPath,
     )}` + (testDetail.length ? ` (${testDetail.join(', ')})` : '')
   );

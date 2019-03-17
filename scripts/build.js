@@ -37,6 +37,7 @@ const BUILD_DIR = 'build';
 const BUILD_ES5_DIR = 'build-es5';
 const JS_FILES_PATTERN = '**/*.js';
 const TS_FILES_PATTERN = '**/*.ts';
+const TSX_FILES_PATTERN = '**/*.tsx';
 const IGNORE_PATTERN = '**/__{tests,mocks}__/**';
 const PACKAGES_DIR = path.resolve(__dirname, '../packages');
 
@@ -57,7 +58,9 @@ function getBuildPath(file, buildFolder) {
   const pkgSrcPath = path.resolve(PACKAGES_DIR, pkgName, SRC_DIR);
   const pkgBuildPath = path.resolve(PACKAGES_DIR, pkgName, buildFolder);
   const relativeToSrcPath = path.relative(pkgSrcPath, file);
-  return path.resolve(pkgBuildPath, relativeToSrcPath).replace(/\.ts$/, '.js');
+  return path
+    .resolve(pkgBuildPath, relativeToSrcPath)
+    .replace(/\.tsx?$/, '.js');
 }
 
 function buildNodePackage(p) {
@@ -121,7 +124,8 @@ function buildFile(file, silent) {
   mkdirp.sync(path.dirname(destPath), '777');
   if (
     !micromatch.isMatch(file, JS_FILES_PATTERN) &&
-    !micromatch.isMatch(file, TS_FILES_PATTERN)
+    !micromatch.isMatch(file, TS_FILES_PATTERN) &&
+    !micromatch.isMatch(file, TSX_FILES_PATTERN)
   ) {
     fs.createReadStream(file).pipe(fs.createWriteStream(destPath));
     silent ||

@@ -12,6 +12,8 @@
 
     "strict": true,
 
+    "jsx": "react",
+
     /* Additional Checks */
     "noUnusedLocals": true,
     "noUnusedParameters": true,

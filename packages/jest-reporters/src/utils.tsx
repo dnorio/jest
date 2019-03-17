@@ -121,11 +121,11 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
   constructor(props: SummaryProps) {
     super(props);
 
-    this.state = {runTime: this.getRuntime(props)};
+    this.state = {runTime: this.getRuntime()};
   }
 
-  getRuntime(props: SummaryProps) {
-    const {aggregatedResults, options} = props;
+  getRuntime() {
+    const {aggregatedResults, options} = this.props;
 
     let runTime = (Date.now() - aggregatedResults.startTime) / 1000;
 
@@ -138,7 +138,7 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
 
   componentDidMount() {
     this.interval = setInterval(() => {
-      const runTime = this.getRuntime(this.props);
+      const runTime = this.getRuntime();
 
       this.setState({runTime});
     }, 1000);

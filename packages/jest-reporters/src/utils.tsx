@@ -6,7 +6,8 @@
  */
 
 import path from 'path';
-import {Config, TestResult} from '@jest/types';
+import {Config} from '@jest/types';
+import {AggregatedResult} from '@jest/test-result';
 import chalk from 'chalk';
 import slash from 'slash';
 import {pluralize} from 'jest-util';
@@ -111,7 +112,7 @@ export const relativePath = (
 };
 
 type SummaryProps = {
-  aggregatedResults: TestResult.AggregatedResult;
+  aggregatedResults: AggregatedResult;
   options?: SummaryOptions;
 };
 

@@ -9,7 +9,8 @@ import path from 'path';
 import React, {FC, Fragment, PureComponent} from 'react';
 import {Box, Color, ColorProps, render, Static, StdoutContext} from 'ink';
 import slash from 'slash';
-import {Config, TestResult} from '@jest/types';
+import {Config} from '@jest/types';
+import {AggregatedResult, TestResult} from '@jest/test-result';
 import {ConsoleBuffer, LogType} from '@jest/console';
 import BaseReporter from './base_reporter';
 import {FormattedPath, Summary} from './utils';
@@ -46,7 +47,7 @@ const Fails: FC = () => <Status red>FAIL</Status>;
 
 const Pass: FC = () => <Status green>PASS</Status>;
 
-const TestStatus = ({testResult}: {testResult: TestResult.TestResult}) => {
+const TestStatus = ({testResult}: {testResult: TestResult}) => {
   if (testResult.skipped) {
     return null;
   }
@@ -118,7 +119,7 @@ const CompletedTests = ({
   done,
 }: {
   completedTests: Array<{
-    testResult: TestResult.TestResult;
+    testResult: TestResult;
     config: Config.ProjectConfig;
   }>;
   width?: number;
@@ -168,16 +169,16 @@ type DateEvents =
   | {
       type: 'TestResult';
       payload: {
-        aggregatedResults: TestResult.AggregatedResult;
+        aggregatedResults: AggregatedResult;
         test: Test;
-        testResult: TestResult.TestResult;
+        testResult: TestResult;
       };
     }
   | {type: 'TestComplete'};
 
 type Props = {
   register: (cb: (events: DateEvents) => void) => void;
-  aggregatedResults: TestResult.AggregatedResult;
+  aggregatedResults: AggregatedResult;
   globalConfig: Config.GlobalConfig;
   options: ReporterOnStartOptions;
 };
@@ -185,9 +186,9 @@ type Props = {
 class Reporter extends PureComponent<
   Props,
   {
-    aggregatedResults: TestResult.AggregatedResult;
+    aggregatedResults: AggregatedResult;
     completedTests: Array<{
-      testResult: TestResult.TestResult;
+      testResult: TestResult;
       config: Config.ProjectConfig;
     }>;
     currentTests: Array<[Config.Path, Config.ProjectConfig]>;
@@ -302,7 +303,7 @@ export default class ReactReporter extends BaseReporter {
   }
 
   onRunStart(
-    aggregatedResults: TestResult.AggregatedResult,
+    aggregatedResults: AggregatedResult,
     options: ReporterOnStartOptions,
   ) {
     const {unmount} = render(
@@ -323,8 +324,8 @@ export default class ReactReporter extends BaseReporter {
 
   onTestResult(
     test: Test,
-    testResult: TestResult.TestResult,
-    aggregatedResults: TestResult.AggregatedResult,
+    testResult: TestResult,
+    aggregatedResults: AggregatedResult,
   ) {
     this._components.forEach(cb =>
       cb({payload: {aggregatedResults, test, testResult}, type: 'TestResult'}),

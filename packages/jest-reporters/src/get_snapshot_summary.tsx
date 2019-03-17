@@ -5,11 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {Config, TestResult} from '@jest/types';
-
 import React from 'react';
 import {Color, Box, Text} from 'ink';
+import {Config} from '@jest/types';
 import {pluralize} from 'jest-util';
+import {SnapshotSummary} from '@jest/test-result';
 import {formatTestPath} from './utils';
 
 const ARROW = ' \u203A ';
@@ -21,7 +21,7 @@ export default ({
   globalConfig,
   updateCommand,
 }: {
-  snapshots: TestResult.SnapshotSummary;
+  snapshots: SnapshotSummary;
   globalConfig: Config.GlobalConfig;
   updateCommand: string;
 }) => (

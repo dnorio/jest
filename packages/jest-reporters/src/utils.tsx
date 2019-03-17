@@ -89,7 +89,7 @@ export const FormattedPath = ({
 
 const SummaryHeading: React.FC = ({children}) => (
   <Box width={13}>
-    <Text bold>{children}</Text>
+    <Text bold>{children}:</Text>
   </Box>
 );
 
@@ -187,7 +187,7 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
     return (
       <Box flexDirection="column">
         <Box>
-          <SummaryHeading>Test Suites:</SummaryHeading>
+          <SummaryHeading>Test Suites</SummaryHeading>
           <Box>
             {suitesFailed > 0 && (
               <>
@@ -218,7 +218,7 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
           </Box>
         </Box>
         <Box>
-          <SummaryHeading>Tests:</SummaryHeading>
+          <SummaryHeading>Tests</SummaryHeading>
           <Box>
             {testsFailed > 0 && (
               <>
@@ -256,7 +256,7 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
           </Box>
         </Box>
         <Box>
-          <SummaryHeading>Snapshots:</SummaryHeading>
+          <SummaryHeading>Snapshots</SummaryHeading>
           <Box>
             {snapshotsFailed > 0 && (
               <>
@@ -327,7 +327,7 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
         </Box>
 
         <Box>
-          <SummaryHeading>Time:</SummaryHeading>
+          <SummaryHeading>Time</SummaryHeading>
 
           <Time runTime={runTime} estimatedTime={estimatedTime} />
         </Box>

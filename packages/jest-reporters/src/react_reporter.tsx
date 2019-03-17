@@ -250,7 +250,7 @@ class Reporter extends PureComponent<
     return (
       <Box flexDirection="column">
         <StdoutContext.Consumer>
-          {({stdout}: {stdout: typeof process.stdout}) => {
+          {({stdout}) => {
             const width = stdout.columns;
 
             return (
@@ -292,9 +292,10 @@ class Reporter extends PureComponent<
 }
 
 export default class ReactReporter extends BaseReporter {
-  _globalConfig: Config.GlobalConfig;
-  _components: Array<(events: DateEvents) => void>;
-  _unmount?: () => void;
+  private _globalConfig: Config.GlobalConfig;
+  private _components: Array<(events: DateEvents) => void>;
+  private _unmount?: () => void;
+  private _waitUntilExit?: () => Promise<void>;
 
   constructor(globalConfig: Config.GlobalConfig) {
     super();
@@ -306,7 +307,7 @@ export default class ReactReporter extends BaseReporter {
     aggregatedResults: AggregatedResult,
     options: ReporterOnStartOptions,
   ) {
-    const {unmount} = render(
+    const {unmount, waitUntilExit} = render(
       <Reporter
         register={cb => this._components.push(cb)}
         aggregatedResults={aggregatedResults}
@@ -316,6 +317,8 @@ export default class ReactReporter extends BaseReporter {
     );
 
     this._unmount = unmount;
+    // @ts-ignore: https://github.com/vadimdemedes/ink/pull/161
+    this._waitUntilExit = waitUntilExit;
   }
 
   onTestStart(test: Test) {
@@ -332,10 +335,13 @@ export default class ReactReporter extends BaseReporter {
     );
   }
 
-  onRunComplete() {
+  async onRunComplete() {
     this._components.forEach(cb => cb({type: 'TestComplete'}));
     if (this._unmount) {
       this._unmount();
+    }
+    if (this._waitUntilExit) {
+      await this._waitUntilExit();
     }
   }
 }

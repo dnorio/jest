@@ -6,7 +6,14 @@
  */
 
 import path from 'path';
-import React, {FC, Fragment, PureComponent} from 'react';
+import React, {
+  FC,
+  Fragment,
+  Reducer,
+  useContext,
+  useEffect,
+  useReducer,
+} from 'react';
 import {Box, Color, ColorProps, render, Static, StdoutContext} from 'ink';
 import slash from 'slash';
 import {Config} from '@jest/types';
@@ -178,118 +185,109 @@ type DateEvents =
 
 type Props = {
   register: (cb: (events: DateEvents) => void) => void;
-  aggregatedResults: AggregatedResult;
+  startingAggregatedResults: AggregatedResult;
   globalConfig: Config.GlobalConfig;
   options: ReporterOnStartOptions;
 };
 
-class Reporter extends PureComponent<
-  Props,
-  {
-    aggregatedResults: AggregatedResult;
-    completedTests: Array<{
-      testResult: TestResult;
-      config: Config.ProjectConfig;
-    }>;
-    currentTests: Array<[Config.Path, Config.ProjectConfig]>;
-    done: boolean;
-  }
-> {
-  constructor(props: Props) {
-    super(props);
+type State = {
+  aggregatedResults: AggregatedResult;
+  completedTests: Array<{
+    testResult: TestResult;
+    config: Config.ProjectConfig;
+  }>;
+  currentTests: Array<[Config.Path, Config.ProjectConfig]>;
+  done: boolean;
+};
 
-    props.register(this.onNewData.bind(this));
-
-    this.state = {
-      aggregatedResults: props.aggregatedResults,
-      completedTests: [],
-      currentTests: [],
-      done: false,
-    };
-  }
-
-  onNewData(data: DateEvents) {
-    switch (data.type) {
-      case 'TestStart':
-        this.setState({
-          currentTests: [
-            ...this.state.currentTests,
-            [data.payload.test.path, data.payload.test.context.config],
-          ],
-        });
-        break;
-      case 'TestResult': {
-        const {aggregatedResults, test, testResult} = data.payload;
-        const currentTests = this.state.currentTests.filter(
-          ([testPath]) => test.path !== testPath,
-        );
-        this.setState({
-          aggregatedResults,
-          completedTests: testResult.skipped
-            ? this.state.completedTests
-            : this.state.completedTests.concat({
-                config: test.context.config,
-                testResult,
-              }),
-          currentTests,
-        });
-        break;
-      }
-      case 'TestComplete': {
-        this.setState({done: true});
-        break;
-      }
+const reporterReducer: Reducer<State, DateEvents> = (prevState, action) => {
+  switch (action.type) {
+    case 'TestStart':
+      return {
+        ...prevState,
+        currentTests: [
+          ...prevState.currentTests,
+          [action.payload.test.path, action.payload.test.context.config],
+        ],
+      };
+    case 'TestResult': {
+      const {aggregatedResults, test, testResult} = action.payload;
+      const currentTests = prevState.currentTests.filter(
+        ([testPath]) => test.path !== testPath,
+      );
+      return {
+        ...prevState,
+        aggregatedResults,
+        completedTests: testResult.skipped
+          ? prevState.completedTests
+          : prevState.completedTests.concat({
+              config: test.context.config,
+              testResult,
+            }),
+        currentTests,
+      };
+    }
+    case 'TestComplete': {
+      return {...prevState, done: true};
     }
   }
+};
 
-  render() {
-    const {currentTests, completedTests, aggregatedResults, done} = this.state;
-    const {globalConfig, options} = this.props;
-    const {estimatedTime = 0} = options;
+const Reporter: FC<Props> = ({
+  register,
+  globalConfig,
+  options,
+  startingAggregatedResults,
+}) => {
+  const [state, dispatch] = useReducer(reporterReducer, {
+    aggregatedResults: startingAggregatedResults,
+    completedTests: [],
+    currentTests: [],
+    done: false,
+  });
 
-    return (
-      <Box flexDirection="column">
-        <StdoutContext.Consumer>
-          {({stdout}) => {
-            const width = stdout.columns;
+  useEffect(() => {
+    register(dispatch);
+  }, [dispatch, register]);
 
-            return (
-              <>
-                <CompletedTests
-                  completedTests={completedTests}
-                  width={width}
-                  globalConfig={globalConfig}
-                  done={done}
-                />
-                {currentTests.length > 0 && (
-                  <Box paddingBottom={1} flexDirection="column">
-                    {currentTests.map(([path, config]) => (
-                      <Box key={path}>
-                        <Runs />{' '}
-                        <FormattedPath
-                          pad={8}
-                          columns={width}
-                          config={config || globalConfig}
-                          testPath={path}
-                        />
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-                {!done && (
-                  <Summary
-                    aggregatedResults={aggregatedResults}
-                    options={{estimatedTime, roundTime: true, width}}
-                  />
-                )}
-              </>
-            );
-          }}
-        </StdoutContext.Consumer>
-      </Box>
-    );
-  }
-}
+  const {stdout} = useContext(StdoutContext);
+  const width = stdout.columns;
+
+  const {currentTests, completedTests, aggregatedResults, done} = state;
+  const {estimatedTime = 0} = options;
+
+  return (
+    <Box flexDirection="column">
+      <CompletedTests
+        completedTests={completedTests}
+        width={width}
+        globalConfig={globalConfig}
+        done={done}
+      />
+      {currentTests.length > 0 && (
+        <Box paddingBottom={1} flexDirection="column">
+          {currentTests.map(([path, config]) => (
+            <Box key={path}>
+              <Runs />{' '}
+              <FormattedPath
+                pad={8}
+                columns={width}
+                config={config || globalConfig}
+                testPath={path}
+              />
+            </Box>
+          ))}
+        </Box>
+      )}
+      {!done && (
+        <Summary
+          aggregatedResults={aggregatedResults}
+          options={{estimatedTime, roundTime: true, width}}
+        />
+      )}
+    </Box>
+  );
+};
 
 export default class ReactReporter extends BaseReporter {
   private _globalConfig: Config.GlobalConfig;
@@ -310,7 +308,7 @@ export default class ReactReporter extends BaseReporter {
     const {unmount, waitUntilExit} = render(
       <Reporter
         register={cb => this._components.push(cb)}
-        aggregatedResults={aggregatedResults}
+        startingAggregatedResults={aggregatedResults}
         options={options}
         globalConfig={this._globalConfig}
       />,

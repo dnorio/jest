@@ -11,7 +11,7 @@ import {AggregatedResult} from '@jest/test-result';
 import chalk from 'chalk';
 import slash from 'slash';
 import {pluralize} from 'jest-util';
-import React, {PureComponent, FC} from 'react';
+import React, {FC, useState, useEffect, useRef} from 'react';
 import {Box, Color, Text} from 'ink';
 import {SummaryOptions} from './types';
 
@@ -117,229 +117,235 @@ export const relativePath = (
   return {basename, dirname};
 };
 
+// from: https://overreacted.io/making-setinterval-declarative-with-react-hooks/
+function useInterval(callback: () => void, delay: number) {
+  const savedCallback = useRef(callback);
+
+  // Remember the latest callback.
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  // Set up the interval.
+  useEffect(() => {
+    function tick() {
+      savedCallback.current();
+    }
+    if (delay !== null) {
+      const id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+
+    return undefined;
+  }, [delay]);
+}
+
+function useCounter() {
+  const [count, setCount] = useState(0);
+
+  useInterval(() => {
+    setCount(count => count + 1);
+  }, 1000);
+
+  return count;
+}
+
 type SummaryProps = {
   aggregatedResults: AggregatedResult;
   options?: SummaryOptions;
 };
 
-export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
-  interval?: NodeJS.Timer;
-  constructor(props: SummaryProps) {
-    super(props);
-
-    this.state = {runTime: this.getRuntime()};
-  }
-
-  getRuntime() {
-    const {aggregatedResults, options} = this.props;
-
-    let runTime = (Date.now() - aggregatedResults.startTime) / 1000;
+export const Summary: FC<SummaryProps> = ({aggregatedResults, options}) => {
+  const {startTime} = aggregatedResults;
+  const [runTime, setRunTime] = useState(0);
+  const time = useCounter();
+  useEffect(() => {
+    let newRunTime = (Date.now() - startTime) / 1000;
 
     if (options && options.roundTime) {
-      runTime = Math.floor(runTime);
+      newRunTime = Math.floor(newRunTime);
     }
 
-    return runTime;
-  }
+    setRunTime(newRunTime);
+  }, [time]);
 
-  componentDidMount() {
-    this.interval = setInterval(() => {
-      const runTime = this.getRuntime();
+  const estimatedTime = (options && options.estimatedTime) || 0;
+  const snapshotResults = aggregatedResults.snapshot;
+  const snapshotsAdded = snapshotResults.added;
+  const snapshotsFailed = snapshotResults.unmatched;
+  const snapshotsOutdated = snapshotResults.unchecked;
+  const snapshotsFilesRemoved = snapshotResults.filesRemoved;
+  const snapshotsDidUpdate = snapshotResults.didUpdate;
+  const snapshotsPassed = snapshotResults.matched;
+  const snapshotsTotal = snapshotResults.total;
+  const snapshotsUpdated = snapshotResults.updated;
+  const suitesFailed = aggregatedResults.numFailedTestSuites;
+  const suitesPassed = aggregatedResults.numPassedTestSuites;
+  const suitesPending = aggregatedResults.numPendingTestSuites;
+  const suitesRun = suitesFailed + suitesPassed;
+  const suitesTotal = aggregatedResults.numTotalTestSuites;
+  const testsFailed = aggregatedResults.numFailedTests;
+  const testsPassed = aggregatedResults.numPassedTests;
+  const testsPending = aggregatedResults.numPendingTests;
+  const testsTodo = aggregatedResults.numTodoTests;
+  const testsTotal = aggregatedResults.numTotalTests;
+  const width = (options && options.width) || 0;
 
-      this.setState({runTime});
-    }, 1000);
-
-    this.interval.unref();
-  }
-
-  componentWillUnmount() {
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
-  }
-
-  render() {
-    const {aggregatedResults, options} = this.props;
-    const {runTime} = this.state;
-
-    const estimatedTime = (options && options.estimatedTime) || 0;
-    const snapshotResults = aggregatedResults.snapshot;
-    const snapshotsAdded = snapshotResults.added;
-    const snapshotsFailed = snapshotResults.unmatched;
-    const snapshotsOutdated = snapshotResults.unchecked;
-    const snapshotsFilesRemoved = snapshotResults.filesRemoved;
-    const snapshotsDidUpdate = snapshotResults.didUpdate;
-    const snapshotsPassed = snapshotResults.matched;
-    const snapshotsTotal = snapshotResults.total;
-    const snapshotsUpdated = snapshotResults.updated;
-    const suitesFailed = aggregatedResults.numFailedTestSuites;
-    const suitesPassed = aggregatedResults.numPassedTestSuites;
-    const suitesPending = aggregatedResults.numPendingTestSuites;
-    const suitesRun = suitesFailed + suitesPassed;
-    const suitesTotal = aggregatedResults.numTotalTestSuites;
-    const testsFailed = aggregatedResults.numFailedTests;
-    const testsPassed = aggregatedResults.numPassedTests;
-    const testsPending = aggregatedResults.numPendingTests;
-    const testsTodo = aggregatedResults.numTodoTests;
-    const testsTotal = aggregatedResults.numTotalTests;
-    const width = (options && options.width) || 0;
-
-    return (
-      <Box flexDirection="column">
+  return (
+    <Box flexDirection="column">
+      <Box>
+        <SummaryHeading>Test Suites</SummaryHeading>
         <Box>
-          <SummaryHeading>Test Suites</SummaryHeading>
-          <Box>
-            {suitesFailed > 0 && (
-              <>
-                <Color bold red>
-                  {suitesFailed} failed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {suitesPending > 0 && (
-              <>
-                <Color bold yellow>
-                  {suitesPending} skipped
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {suitesPassed > 0 && (
-              <>
-                <Color bold green>
-                  {suitesPassed} passed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {suitesRun !== suitesTotal && suitesRun + ' of '}
-            {suitesTotal} total
-          </Box>
+          {suitesFailed > 0 && (
+            <>
+              <Color bold red>
+                {suitesFailed} failed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {suitesPending > 0 && (
+            <>
+              <Color bold yellow>
+                {suitesPending} skipped
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {suitesPassed > 0 && (
+            <>
+              <Color bold green>
+                {suitesPassed} passed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {suitesRun !== suitesTotal && suitesRun + ' of '}
+          {suitesTotal} total
         </Box>
-        <Box>
-          <SummaryHeading>Tests</SummaryHeading>
-          <Box>
-            {testsFailed > 0 && (
-              <>
-                <Color bold red>
-                  {testsFailed} failed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {testsPending > 0 && (
-              <>
-                <Color bold yellow>
-                  {testsPending} skipped
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {testsTodo > 0 && (
-              <>
-                <Color bold magenta>
-                  {testsTodo} todo
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {testsPassed > 0 && (
-              <>
-                <Color bold green>
-                  {testsPassed} passed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {testsTotal} total
-          </Box>
-        </Box>
-        <Box>
-          <SummaryHeading>Snapshots</SummaryHeading>
-          <Box>
-            {snapshotsFailed > 0 && (
-              <>
-                <Color bold red>
-                  {snapshotsFailed} failed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsOutdated > 0 && !snapshotsDidUpdate && (
-              <>
-                <Color bold yellow>
-                  {snapshotsOutdated} obsolete
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsOutdated > 0 && snapshotsDidUpdate && (
-              <>
-                <Color bold green>
-                  {snapshotsOutdated} removed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsFilesRemoved > 0 && !snapshotsDidUpdate && (
-              <>
-                <Color bold yellow>
-                  {pluralize('file', snapshotsFilesRemoved)} obsolete
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsFilesRemoved > 0 && snapshotsDidUpdate && (
-              <>
-                <Color bold green>
-                  {pluralize('file', snapshotsFilesRemoved)} removed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsUpdated > 0 && (
-              <>
-                <Color bold green>
-                  {snapshotsUpdated} updated
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsAdded > 0 && (
-              <>
-                <Color bold green>
-                  {snapshotsAdded} written
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsPassed > 0 && (
-              <>
-                <Color bold green>
-                  {snapshotsPassed} passed
-                </Color>
-                ,{' '}
-              </>
-            )}
-            {snapshotsTotal} total
-          </Box>
-        </Box>
-
-        <Box>
-          <SummaryHeading>Time</SummaryHeading>
-
-          <Time runTime={runTime} estimatedTime={estimatedTime} />
-        </Box>
-        <ProgressBar
-          runTime={runTime}
-          estimatedTime={estimatedTime}
-          width={width}
-        />
       </Box>
-    );
-  }
-}
+      <Box>
+        <SummaryHeading>Tests</SummaryHeading>
+        <Box>
+          {testsFailed > 0 && (
+            <>
+              <Color bold red>
+                {testsFailed} failed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {testsPending > 0 && (
+            <>
+              <Color bold yellow>
+                {testsPending} skipped
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {testsTodo > 0 && (
+            <>
+              <Color bold magenta>
+                {testsTodo} todo
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {testsPassed > 0 && (
+            <>
+              <Color bold green>
+                {testsPassed} passed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {testsTotal} total
+        </Box>
+      </Box>
+      <Box>
+        <SummaryHeading>Snapshots</SummaryHeading>
+        <Box>
+          {snapshotsFailed > 0 && (
+            <>
+              <Color bold red>
+                {snapshotsFailed} failed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsOutdated > 0 && !snapshotsDidUpdate && (
+            <>
+              <Color bold yellow>
+                {snapshotsOutdated} obsolete
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsOutdated > 0 && snapshotsDidUpdate && (
+            <>
+              <Color bold green>
+                {snapshotsOutdated} removed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsFilesRemoved > 0 && !snapshotsDidUpdate && (
+            <>
+              <Color bold yellow>
+                {pluralize('file', snapshotsFilesRemoved)} obsolete
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsFilesRemoved > 0 && snapshotsDidUpdate && (
+            <>
+              <Color bold green>
+                {pluralize('file', snapshotsFilesRemoved)} removed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsUpdated > 0 && (
+            <>
+              <Color bold green>
+                {snapshotsUpdated} updated
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsAdded > 0 && (
+            <>
+              <Color bold green>
+                {snapshotsAdded} written
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsPassed > 0 && (
+            <>
+              <Color bold green>
+                {snapshotsPassed} passed
+              </Color>
+              ,{' '}
+            </>
+          )}
+          {snapshotsTotal} total
+        </Box>
+      </Box>
+
+      <Box>
+        <SummaryHeading>Time</SummaryHeading>
+
+        <Time runTime={runTime} estimatedTime={estimatedTime} />
+      </Box>
+      <ProgressBar
+        runTime={runTime}
+        estimatedTime={estimatedTime}
+        width={width}
+      />
+    </Box>
+  );
+};
 
 const ProgressBar: FC<{
   runTime: number;

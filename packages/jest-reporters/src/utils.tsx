@@ -87,6 +87,12 @@ export const FormattedPath = ({
   );
 };
 
+const SummaryHeading: React.FC = ({children}) => (
+  <Box width={13}>
+    <Text bold>{children}</Text>
+  </Box>
+);
+
 export const formatTestPath = (
   config: Config.GlobalConfig | Config.ProjectConfig,
   testPath: Config.Path,
@@ -181,146 +187,149 @@ export class Summary extends PureComponent<SummaryProps, {runTime: number}> {
     return (
       <Box flexDirection="column">
         <Box>
-          <Box flexDirection="column" paddingRight={1}>
-            <Text bold>Test Suites:</Text>
-            <Text bold>Tests:</Text>
-            <Text bold>Snapshots:</Text>
-            <Text bold>Time:</Text>
+          <SummaryHeading>Test Suites:</SummaryHeading>
+          <Box>
+            {suitesFailed > 0 && (
+              <>
+                <Color bold red>
+                  {suitesFailed} failed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {suitesPending > 0 && (
+              <>
+                <Color bold yellow>
+                  {suitesPending} skipped
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {suitesPassed > 0 && (
+              <>
+                <Color bold green>
+                  {suitesPassed} passed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {suitesRun !== suitesTotal && suitesRun + ' of '}
+            {suitesTotal} total
           </Box>
+        </Box>
+        <Box>
+          <SummaryHeading>Tests:</SummaryHeading>
+          <Box>
+            {testsFailed > 0 && (
+              <>
+                <Color bold red>
+                  {testsFailed} failed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {testsPending > 0 && (
+              <>
+                <Color bold yellow>
+                  {testsPending} skipped
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {testsTodo > 0 && (
+              <>
+                <Color bold magenta>
+                  {testsTodo} todo
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {testsPassed > 0 && (
+              <>
+                <Color bold green>
+                  {testsPassed} passed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {testsTotal} total
+          </Box>
+        </Box>
+        <Box>
+          <SummaryHeading>Snapshots:</SummaryHeading>
+          <Box>
+            {snapshotsFailed > 0 && (
+              <>
+                <Color bold red>
+                  {snapshotsFailed} failed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsOutdated > 0 && !snapshotsDidUpdate && (
+              <>
+                <Color bold yellow>
+                  {snapshotsOutdated} obsolete
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsOutdated > 0 && snapshotsDidUpdate && (
+              <>
+                <Color bold green>
+                  {snapshotsOutdated} removed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsFilesRemoved > 0 && !snapshotsDidUpdate && (
+              <>
+                <Color bold yellow>
+                  {pluralize('file', snapshotsFilesRemoved)} obsolete
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsFilesRemoved > 0 && snapshotsDidUpdate && (
+              <>
+                <Color bold green>
+                  {pluralize('file', snapshotsFilesRemoved)} removed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsUpdated > 0 && (
+              <>
+                <Color bold green>
+                  {snapshotsUpdated} updated
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsAdded > 0 && (
+              <>
+                <Color bold green>
+                  {snapshotsAdded} written
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsPassed > 0 && (
+              <>
+                <Color bold green>
+                  {snapshotsPassed} passed
+                </Color>
+                ,{' '}
+              </>
+            )}
+            {snapshotsTotal} total
+          </Box>
+        </Box>
 
-          <Box flexDirection="column">
-            <Box>
-              {suitesFailed > 0 && (
-                <>
-                  <Color bold red>
-                    {suitesFailed} failed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {suitesPending > 0 && (
-                <>
-                  <Color bold yellow>
-                    {suitesPending} skipped
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {suitesPassed > 0 && (
-                <>
-                  <Color bold green>
-                    {suitesPassed} passed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {suitesRun !== suitesTotal && suitesRun + ' of '}
-              {suitesTotal} total
-            </Box>
-            <Box>
-              {testsFailed > 0 && (
-                <>
-                  <Color bold red>
-                    {testsFailed} failed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {testsPending > 0 && (
-                <>
-                  <Color bold yellow>
-                    {testsPending} skipped
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {testsTodo > 0 && (
-                <>
-                  <Color bold magenta>
-                    {testsTodo} todo
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {testsPassed > 0 && (
-                <>
-                  <Color bold green>
-                    {testsPassed} passed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {testsTotal} total
-            </Box>
-            <Box>
-              {snapshotsFailed > 0 && (
-                <>
-                  <Color bold red>
-                    {snapshotsFailed} failed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsOutdated > 0 && !snapshotsDidUpdate && (
-                <>
-                  <Color bold yellow>
-                    {snapshotsOutdated} obsolete
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsOutdated > 0 && snapshotsDidUpdate && (
-                <>
-                  <Color bold green>
-                    {snapshotsOutdated} removed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsFilesRemoved > 0 && !snapshotsDidUpdate && (
-                <>
-                  <Color bold yellow>
-                    {pluralize('file', snapshotsFilesRemoved)} obsolete
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsFilesRemoved > 0 && snapshotsDidUpdate && (
-                <>
-                  <Color bold green>
-                    {pluralize('file', snapshotsFilesRemoved)} removed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsUpdated > 0 && (
-                <>
-                  <Color bold green>
-                    {snapshotsUpdated} updated
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsAdded > 0 && (
-                <>
-                  <Color bold green>
-                    {snapshotsAdded} written
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsPassed > 0 && (
-                <>
-                  <Color bold green>
-                    {snapshotsPassed} passed
-                  </Color>
-                  ,{' '}
-                </>
-              )}
-              {snapshotsTotal} total
-            </Box>
-            <Time runTime={runTime} estimatedTime={estimatedTime} />
-          </Box>
+        <Box>
+          <SummaryHeading>Time:</SummaryHeading>
+
+          <Time runTime={runTime} estimatedTime={estimatedTime} />
         </Box>
         <ProgressBar
           runTime={runTime}

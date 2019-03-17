@@ -14,7 +14,7 @@
     "chalk": "^2.0.1",
     "exit": "^0.1.2",
     "graceful-fs": "^4.1.15",
-    "ink": "^2.0.3",
+    "ink": "^2.0.5",
     "jest-changed-files": "^24.5.0",
     "jest-config": "^24.5.0",
     "jest-haste-map": "^24.5.0",

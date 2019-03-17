@@ -6985,10 +6985,10 @@ ink-text-input@^3.0.0:
   dependencies:
     prop-types "^15.5.10"
 
-ink@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/ink/-/ink-2.0.3.tgz#be59b501398a0cf8b18d8ee26cee060a126c25a2"
-  integrity sha512-xnB7jKEyXFmEHvx9dVvfmsjhjcN8r8c/gloxFvh6S4mhhyyLiKpV+Y18atFyRxuQnACF077zlPZXDNrHQGkcrw==
+ink@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/ink/-/ink-2.0.5.tgz#a7fcd79372f57bef0e436d087cbef9e545ee1051"
+  integrity sha512-uqJBW4ro8SfMnwEVSfH0hAMGA2T8bhrOb9TUcdhvHval9edVESUcSQBfQ0wTXOENnavQXzAXWB1CznufHYBxiQ==
   dependencies:
     "@types/react" "^16.8.6"
     arrify "^1.0.1"

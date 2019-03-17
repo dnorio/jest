@@ -34,18 +34,22 @@ const DisplayName = ({
   }
 
   return (
-    <Color white inverse>
-      {displayName}{' '}
-    </Color>
+    <Box paddingRight={1}>
+      <Color white inverse>
+        {displayName}
+      </Color>
+    </Box>
   );
 };
 
 const Status: FC<ColorProps> = ({children, ...props}) => (
-  <Color inverse bold {...props}>
-    &nbsp;
-    {children}
-    &nbsp;
-  </Color>
+  <Box paddingRight={1}>
+    <Color inverse bold {...props}>
+      &nbsp;
+      {children}
+      &nbsp;
+    </Color>
+  </Box>
 );
 
 const Runs: FC = () => <Status yellow>RUNS</Status>;
@@ -144,7 +148,7 @@ const CompletedTests = ({
         {completedTests.map(({testResult, config}) => (
           <Fragment key={testResult.testFilePath}>
             <Box>
-              <TestStatus testResult={testResult} />{' '}
+              <TestStatus testResult={testResult} />
               <DisplayName displayName={(config || globalConfig).displayName} />
               <FormattedPath
                 pad={8}
@@ -267,8 +271,8 @@ const Reporter: FC<Props> = ({
       {currentTests.length > 0 && (
         <Box paddingBottom={1} flexDirection="column">
           {currentTests.map(([path, config]) => (
-            <Box key={path}>
-              <Runs />{' '}
+            <Box key={path + config.name}>
+              <Runs />
               <FormattedPath
                 pad={8}
                 columns={width}

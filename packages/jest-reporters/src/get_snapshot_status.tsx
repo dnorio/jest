@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {TestResult} from '@jest/types';
+import {TestResult} from '@jest/test-result';
 
 import React, {FC} from 'react';
 import {Box, Color} from 'ink';
@@ -40,7 +40,7 @@ const SnapshotStatus = ({
   snapshot,
   afterUpdate,
 }: {
-  snapshot: TestResult.TestResult['snapshot'];
+  snapshot: TestResult['snapshot'];
   afterUpdate: boolean;
 }) => (
   <>

@@ -11,15 +11,7 @@ import {Config} from '@jest/types';
 import snapshot from 'jest-snapshot';
 import TestRunner, {Test} from 'jest-runner';
 import {Context} from 'jest-runtime';
-import {
-  CoverageReporter,
-  DefaultReporter,
-  NotifyReporter,
-  ReactReporter,
-  SummaryReporter,
-  VerboseReporter,
-  Reporter,
-} from '@jest/reporters';
+import {ReactReporter, Reporter} from '@jest/reporters';
 import exit from 'exit';
 import {
   addResult,
@@ -48,17 +40,15 @@ export type TestSchedulerContext = {
 export default class TestScheduler {
   private _dispatcher: ReporterDispatcher;
   private _globalConfig: Config.GlobalConfig;
-  private _options: TestSchedulerOptions;
   private _context: TestSchedulerContext;
 
   constructor(
     globalConfig: Config.GlobalConfig,
-    options: TestSchedulerOptions,
+    _options: TestSchedulerOptions,
     context: TestSchedulerContext,
   ) {
     this._dispatcher = new ReporterDispatcher();
     this._globalConfig = globalConfig;
-    this._options = options;
     this._context = context;
     this._setupReporters();
   }
@@ -245,99 +235,8 @@ export default class TestScheduler {
     }
   }
 
-  private _shouldAddDefaultReporters(
-    reporters?: Array<string | Config.ReporterConfig>,
-  ): boolean {
-    return (
-      !reporters ||
-      !!reporters.find(
-        reporter => this._getReporterProps(reporter).path === 'default',
-      )
-    );
-  }
-
   private _setupReporters() {
-    const {collectCoverage, notify, reporters} = this._globalConfig;
-    const isDefault = this._shouldAddDefaultReporters(reporters);
-
-    if (isDefault) {
-      this._setupDefaultReporters(collectCoverage);
-    }
-
-    if (!isDefault && collectCoverage) {
-      this.addReporter(
-        new CoverageReporter(this._globalConfig, {
-          changedFiles: this._context && this._context.changedFiles,
-        }),
-      );
-    }
-
-    if (notify) {
-      this.addReporter(
-        new NotifyReporter(
-          this._globalConfig,
-          this._options.startRun,
-          this._context,
-        ),
-      );
-    }
-
-    if (reporters && Array.isArray(reporters)) {
-      this._addCustomReporters(reporters);
-    }
-  }
-
-  private _setupDefaultReporters(collectCoverage: boolean) {
     this.addReporter(new ReactReporter(this._globalConfig));
-
-    if (collectCoverage) {
-      this.addReporter(
-        new CoverageReporter(this._globalConfig, {
-          changedFiles: this._context && this._context.changedFiles,
-        }),
-      );
-    }
-
-    this.addReporter(new SummaryReporter(this._globalConfig));
-  }
-
-  private _addCustomReporters(
-    reporters: Array<string | Config.ReporterConfig>,
-  ) {
-    reporters.forEach(reporter => {
-      const {options, path} = this._getReporterProps(reporter);
-
-      if (path === 'default') return;
-
-      try {
-        const Reporter = require(path);
-        this.addReporter(new Reporter(this._globalConfig, options));
-      } catch (error) {
-        throw new Error(
-          'An error occurred while adding the reporter at path "' +
-            path +
-            '".' +
-            error.message,
-        );
-      }
-    });
-  }
-
-  /**
-   * Get properties of a reporter in an object
-   * to make dealing with them less painful.
-   */
-  private _getReporterProps(
-    reporter: string | Config.ReporterConfig,
-  ): {path: string; options: {[key: string]: unknown}} {
-    if (typeof reporter === 'string') {
-      return {options: this._options, path: reporter};
-    } else if (Array.isArray(reporter)) {
-      const [path, options] = reporter;
-      return {options, path};
-    }
-
-    throw new Error('Reporter should be either a string or an array');
   }
 
   private _bailIfNeeded(

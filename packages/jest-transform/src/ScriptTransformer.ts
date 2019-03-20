@@ -8,6 +8,7 @@
 import crypto from 'crypto';
 import path from 'path';
 import vm from 'vm';
+import {performance} from 'perf_hooks';
 import {Config} from '@jest/types';
 import {createDirectory} from 'jest-util';
 import fs from 'graceful-fs';
@@ -328,10 +329,17 @@ export default class ScriptTransformer {
       const extraGlobals = (options && options.extraGlobals) || [];
 
       if (willTransform) {
+        performance.mark(`Start transform for ${filename}`);
         const transformedSource = this.transformSource(
           filename,
           content,
           instrument,
+        );
+        performance.mark(`End transform for ${filename}`);
+        performance.measure(
+          `Transform for ${filename}`,
+          `Start transform for ${filename}`,
+          `End transform for ${filename}`,
         );
 
         wrappedCode = wrap(transformedSource.code, ...extraGlobals);

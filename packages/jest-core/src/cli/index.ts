@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+import {PerformanceObserver, performance} from 'perf_hooks';
+import {createTracing} from 'trace_events';
 import {Config} from '@jest/types';
 import {AggregatedResult} from '@jest/test-result';
 import {CustomConsole} from '@jest/console';
@@ -72,6 +74,10 @@ export const runCLI = async (
     exit(0);
   }
 
+  const tracing = createTracing({categories: ['node.perf.usertiming']});
+  tracing.enable();
+
+
   await _run(
     globalConfig,
     configs,
@@ -79,6 +85,7 @@ export const runCLI = async (
     outputStream,
     r => (results = r),
   );
+  tracing.disable();
 
   if (argv.watch || argv.watchAll) {
     // If in watch mode, return the promise that will never resolve.

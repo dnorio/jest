@@ -150,9 +150,7 @@ export const getStringDiff = (
   if (
     expected === received ||
     expected.length === 0 ||
-    received.length === 0 ||
-    expected.length > MAX_DIFF_STRING_LENGTH ||
-    received.length > MAX_DIFF_STRING_LENGTH
+    received.length === 0
   ) {
     return null;
   }

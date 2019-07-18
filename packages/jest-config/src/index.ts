@@ -13,6 +13,8 @@ import {isJSONString, replaceRootDirInPath} from './utils';
 import normalize from './normalize';
 import resolveConfigPath from './resolveConfigPath';
 import readConfigFileAndSetRootDir from './readConfigFileAndSetRootDir';
+import {getStringDiff} from 'jest-diff';
+import pretty from 'pretty-format';
 export {getTestEnvironment, isJSONString} from './utils';
 export {default as normalize} from './normalize';
 export {default as deprecationEntries} from './Deprecated';
@@ -101,7 +103,7 @@ const groupOptions = (
   globalConfig: Config.GlobalConfig;
   projectConfig: Config.ProjectConfig;
 } => ({
-  globalConfig: Object.freeze({
+  globalConfig: {
     bail: options.bail,
     changedFilesWithAncestor: options.changedFilesWithAncestor,
     changedSince: options.changedSince,
@@ -157,8 +159,8 @@ const groupOptions = (
     watchAll: options.watchAll,
     watchPlugins: options.watchPlugins,
     watchman: options.watchman,
-  }),
-  projectConfig: Object.freeze({
+  },
+  projectConfig: {
     automock: options.automock,
     browser: options.browser,
     cache: options.cache,
@@ -212,7 +214,7 @@ const groupOptions = (
     transformIgnorePatterns: options.transformIgnorePatterns,
     unmockedModulePathPatterns: options.unmockedModulePathPatterns,
     watchPathIgnorePatterns: options.watchPathIgnorePatterns,
-  }),
+  },
 });
 
 const ensureNoDuplicateConfigs = (
@@ -334,9 +336,37 @@ export function readConfigs(
     throw new Error('jest: No configuration found for any project.');
   }
 
-  return {
+  configs.forEach(c => {
+    Object.entries(c).forEach(([key, value]) => {
+      if (value === undefined) {
+        delete c[key];
+      }
+    });
+  });
+  Object.entries(globalConfig).forEach(([key, value]) => {
+    if (value === undefined) {
+      delete globalConfig[key];
+    }
+  });
+
+  const returnValue = {
     configs,
     globalConfig,
     hasDeprecationWarnings: !!hasDeprecationWarnings,
   };
+
+  const stringifiedTheParsed = JSON.parse(JSON.stringify(returnValue));
+
+  const diffAfterSerialization = getStringDiff(
+    pretty(returnValue),
+    pretty(stringifiedTheParsed),
+    {expand: false},
+  );
+
+  if (diffAfterSerialization) {
+    console.log(diffAfterSerialization.annotatedDiff);
+    throw new Error('shit');
+  }
+
+  return returnValue;
 }

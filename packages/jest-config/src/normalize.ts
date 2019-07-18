@@ -249,9 +249,16 @@ const normalizeUnmockedModulePathPatterns = (
   //
   // For patterns, direct global substitution is far more ideal, so we
   // special case substitutions for patterns here.
-  options[key]!.map(pattern =>
-    replacePathSepForRegex(pattern.replace(/<rootDir>/g, options.rootDir)),
-  );
+  options[key]!.map(pattern => {
+    if (typeof pattern === 'string') {
+      return replacePathSepForRegex(
+        pattern.replace(/<rootDir>/g, options.rootDir),
+      );
+    }
+    return replacePathSepForRegex(
+      new RegExp(pattern.source.replace(/<rootDir>/g, options.rootDir)),
+    );
+  });
 
 const normalizePreprocessor = (
   options: Config.InitialOptions,

@@ -22,6 +22,7 @@ module.exports = {
     'packages/jest-runtime/src/__tests__/test_root.*',
     'website/.*',
     'e2e/runtime-internal-module-registry/__mocks__',
+    /hello!/,
   ],
   projects: ['<rootDir>', '<rootDir>/examples/*/'],
   setupFilesAfterEnv: ['<rootDir>/testSetupFile.js'],

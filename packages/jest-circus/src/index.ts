@@ -13,17 +13,13 @@ import {Circus, Global} from '@jest/types';
 import {dispatch} from './state';
 
 type THook = (fn: Circus.HookFn, timeout?: number) => void;
-type DescribeFn = (
-  blockName: Circus.BlockName,
-  blockFn: Circus.BlockFn,
-) => void;
 
-const describe = (() => {
-  const describe = (blockName: Circus.BlockName, blockFn: Circus.BlockFn) =>
+const describe: Global.Describe = (() => {
+  const describe: Global.Describe = (blockName, blockFn) =>
     _dispatchDescribe(blockFn, blockName, describe);
-  const only = (blockName: Circus.BlockName, blockFn: Circus.BlockFn) =>
+  const only: Global.DescribeBase = (blockName, blockFn) =>
     _dispatchDescribe(blockFn, blockName, only, 'only');
-  const skip = (blockName: Circus.BlockName, blockFn: Circus.BlockFn) =>
+  const skip: Global.DescribeBase = (blockName, blockFn) =>
     _dispatchDescribe(blockFn, blockName, skip, 'skip');
 
   describe.each = bindEach(describe, false);
@@ -40,7 +36,7 @@ const describe = (() => {
 const _dispatchDescribe = (
   blockFn: Circus.BlockFn,
   blockName: Circus.BlockName,
-  describeFn: DescribeFn,
+  describeFn: Global.DescribeBase,
   mode?: Circus.BlockMode,
 ) => {
   const asyncError = new ErrorWithStack(undefined, describeFn);

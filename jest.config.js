@@ -28,6 +28,7 @@ module.exports = {
     'website/.*',
     'e2e/runtime-internal-module-registry/__mocks__',
   ],
+  testRunner: 'jest-circus/runner',
   projects: ['<rootDir>', '<rootDir>/examples/*/'],
   setupFilesAfterEnv: ['<rootDir>/testSetupFile.js'],
   snapshotSerializers: [

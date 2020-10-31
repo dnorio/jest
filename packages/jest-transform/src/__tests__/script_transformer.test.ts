@@ -151,6 +151,8 @@ let mockFs: Record<Config.Path, string>;
 let object: <T>(input: T) => T;
 let writeFileAtomic: typeof import('write-file-atomic');
 
+const filename = '/fruits/banana.js';
+
 jest.mock('write-file-atomic', () => ({
   sync: jest.fn().mockImplementation((filePath, data) => {
     mockFs[filePath] = data;
@@ -228,20 +230,18 @@ describe('ScriptTransformer', () => {
   it('transforms a file properly', () => {
     const scriptTransformer = new ScriptTransformer(config);
     const transformedBananaWithCoverage = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
 
     expect(wrap(transformedBananaWithCoverage.code)).toMatchSnapshot();
 
-    // no-cache case
-    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
-    expect(fs.readFileSync).toBeCalledWith('/fruits/banana.js', 'utf8');
-
     // in-memory cache
     const transformedBananaWithCoverageAgain = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
     expect(transformedBananaWithCoverageAgain).toBe(
       transformedBananaWithCoverage,
@@ -250,6 +250,7 @@ describe('ScriptTransformer', () => {
     const transformedKiwiWithCoverage = scriptTransformer.transform(
       '/fruits/kiwi.js',
       getCoverageOptions({collectCoverage: true}),
+      mockFs['/fruits/kiwi.js'],
     );
     expect(wrap(transformedKiwiWithCoverage.code)).toMatchSnapshot();
 
@@ -262,6 +263,7 @@ describe('ScriptTransformer', () => {
     const transformedKiwiWithoutCoverage = scriptTransformer.transform(
       '/fruits/kiwi.js',
       getCoverageOptions({collectCoverage: false}),
+      mockFs['/fruits/kiwi.js'],
     );
 
     expect(transformedKiwiWithoutCoverage.code).not.toEqual(
@@ -299,7 +301,7 @@ describe('ScriptTransformer', () => {
       const scriptTransformer = new ScriptTransformer(config);
 
       const incorrectReturnValues = [
-        [undefined, '/fruits/banana.js'],
+        [undefined, filename],
         [{a: 'a'}, '/fruits/kiwi.js'],
         [[], '/fruits/grapefruit.js'],
       ];
@@ -310,12 +312,16 @@ describe('ScriptTransformer', () => {
           returnValue,
         );
         expect(() =>
-          scriptTransformer.transform(filePath, getCoverageOptions()),
+          scriptTransformer.transform(
+            filePath,
+            getCoverageOptions(),
+            mockFs[filename],
+          ),
         ).toThrow('must return a string');
       });
 
       const correctReturnValues = [
-        ['code', '/fruits/banana.js'],
+        ['code', filename],
         [{code: 'code'}, '/fruits/kiwi.js'],
       ];
 
@@ -325,7 +331,11 @@ describe('ScriptTransformer', () => {
           returnValue,
         );
         expect(() =>
-          scriptTransformer.transform(filePath, getCoverageOptions()),
+          scriptTransformer.transform(
+            filePath,
+            getCoverageOptions(),
+            mockFs[filename],
+          ),
         ).not.toThrow();
       });
     },
@@ -338,7 +348,7 @@ describe('ScriptTransformer', () => {
     };
     const scriptTransformer = new ScriptTransformer(config);
     expect(() =>
-      scriptTransformer.transformSource('sample.js', '', false),
+      scriptTransformer.transformSource('sample.js', '', {instrument: false}),
     ).toThrow('Jest: a transform must export a `process` function.');
   });
 
@@ -355,7 +365,7 @@ describe('ScriptTransformer', () => {
     };
     const scriptTransformer = new ScriptTransformer(config);
     expect(() =>
-      scriptTransformer.transformSource('sample.js', '', false),
+      scriptTransformer.transformSource('sample.js', '', {instrument: false}),
     ).toThrow('Jest: a transform must export a `process` function.');
   });
 
@@ -366,7 +376,7 @@ describe('ScriptTransformer', () => {
     };
     const scriptTransformer = new ScriptTransformer(config);
     expect(() =>
-      scriptTransformer.transformSource('sample.js', '', false),
+      scriptTransformer.transformSource('sample.js', '', {instrument: false}),
     ).not.toThrow();
   });
 
@@ -374,8 +384,9 @@ describe('ScriptTransformer', () => {
     config = {...config, transform: [['\\.js$', 'test_preprocessor', {}]]};
     const scriptTransformer = new ScriptTransformer(config);
     const res1 = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
 
     expect(require('test_preprocessor').getCacheKey).toBeCalled();
@@ -385,6 +396,7 @@ describe('ScriptTransformer', () => {
     const res2 = scriptTransformer.transform(
       '/node_modules/react.js',
       getCoverageOptions(),
+      mockFs['/node_modules/react.js'],
     );
     // ignores preprocessor
     expect(wrap(res2.code)).toMatchSnapshot();
@@ -401,12 +413,14 @@ describe('ScriptTransformer', () => {
     const scriptTransformer = new ScriptTransformer(config);
 
     const res1 = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
     const res2 = scriptTransformer.transform(
       '/styles/App.css',
       getCoverageOptions(),
+      mockFs['/styles/App.css'],
     );
 
     expect(require('test_preprocessor').getCacheKey).toBeCalled();
@@ -417,6 +431,7 @@ describe('ScriptTransformer', () => {
     const res3 = scriptTransformer.transform(
       '/node_modules/react.js',
       getCoverageOptions(),
+      mockFs['/node_modules/react.js'],
     );
     // ignores preprocessor
     expect(wrap(res3.code)).toMatchSnapshot();
@@ -440,8 +455,9 @@ describe('ScriptTransformer', () => {
     });
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toEqual(expect.any(String));
     const mapStr = JSON.stringify(map);
@@ -472,8 +488,9 @@ describe('ScriptTransformer', () => {
     require('preprocessor-with-sourcemaps').process.mockReturnValue(content);
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toEqual(expect.any(String));
     expect(writeFileAtomic.sync).toBeCalledTimes(2);
@@ -508,8 +525,9 @@ describe('ScriptTransformer', () => {
     require('preprocessor-with-sourcemaps').process.mockReturnValue(content);
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toBeNull();
     expect(writeFileAtomic.sync).toBeCalledTimes(1);
@@ -537,8 +555,9 @@ describe('ScriptTransformer', () => {
     });
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toEqual(expect.any(String));
     expect(writeFileAtomic.sync).toBeCalledTimes(2);
@@ -565,8 +584,9 @@ describe('ScriptTransformer', () => {
     });
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toBeFalsy();
     expect(writeFileAtomic.sync).toHaveBeenCalledTimes(1);
@@ -602,8 +622,9 @@ describe('ScriptTransformer', () => {
     });
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toEqual(expect.any(String));
     expect(writeFileAtomic.sync).toBeCalledTimes(2);
@@ -638,8 +659,9 @@ describe('ScriptTransformer', () => {
     });
 
     const result = scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
     expect(result.sourceMapPath).toEqual(expect.any(String));
     expect(writeFileAtomic.sync).toBeCalledTimes(2);
@@ -658,8 +680,9 @@ describe('ScriptTransformer', () => {
     const scriptTransformer = new ScriptTransformer(config);
 
     scriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions({collectCoverage: true}),
+      mockFs[filename],
     );
 
     const {getCacheKey} = require('test_preprocessor');
@@ -673,7 +696,11 @@ describe('ScriptTransformer', () => {
     });
 
     const scriptTransformer = new ScriptTransformer(config);
-    scriptTransformer.transform('/fruits/banana.js', {});
+    scriptTransformer.transform(
+      filename,
+      getCoverageOptions(),
+      mockFs[filename],
+    );
     expect(
       require('configureable-preprocessor').createTransformer,
     ).toHaveBeenCalledWith(transformerConfig);
@@ -685,50 +712,10 @@ describe('ScriptTransformer', () => {
       transform: [['\\.js$', 'test_preprocessor', {}]],
     };
     let scriptTransformer = new ScriptTransformer(transformConfig);
-    scriptTransformer.transform('/fruits/banana.js', getCoverageOptions());
-
-    const cachePath = getCachePath(mockFs, config);
-    expect(writeFileAtomic.sync).toBeCalled();
-    expect(writeFileAtomic.sync.mock.calls[0][0]).toBe(cachePath);
-
-    // Cache the state in `mockFsCopy`
-    const mockFsCopy = mockFs;
-    jest.resetModuleRegistry();
-    reset();
-
-    // Restore the cached fs
-    mockFs = mockFsCopy;
-    scriptTransformer = new ScriptTransformer(transformConfig);
-    scriptTransformer.transform('/fruits/banana.js', getCoverageOptions());
-
-    expect(fs.readFileSync).toHaveBeenCalledTimes(2);
-    expect(fs.readFileSync).toBeCalledWith('/fruits/banana.js', 'utf8');
-    expect(fs.readFileSync).toBeCalledWith(cachePath, 'utf8');
-    expect(writeFileAtomic.sync).not.toBeCalled();
-
-    // Don't read from the cache when `config.cache` is false.
-    jest.resetModuleRegistry();
-    reset();
-    mockFs = mockFsCopy;
-    transformConfig.cache = false;
-    scriptTransformer = new ScriptTransformer(transformConfig);
-    scriptTransformer.transform('/fruits/banana.js', getCoverageOptions());
-
-    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
-    expect(fs.readFileSync).toBeCalledWith('/fruits/banana.js', 'utf8');
-    expect(fs.readFileSync).not.toBeCalledWith(cachePath, 'utf8');
-    expect(writeFileAtomic.sync).toBeCalled();
-  });
-
-  it('reads values from the cache when the file contains colons', () => {
-    const transformConfig: Config.ProjectConfig = {
-      ...config,
-      transform: [['\\.js$', 'test_preprocessor', {}]],
-    };
-    let scriptTransformer = new ScriptTransformer(transformConfig);
     scriptTransformer.transform(
-      '/fruits/banana:colon.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
 
     const cachePath = getCachePath(mockFs, config);
@@ -743,7 +730,61 @@ describe('ScriptTransformer', () => {
     // Restore the cached fs
     mockFs = mockFsCopy;
     scriptTransformer = new ScriptTransformer(transformConfig);
-    scriptTransformer.transform('/fruits/banana:colon.js', {});
+    scriptTransformer.transform(
+      filename,
+      getCoverageOptions(),
+      mockFs[filename],
+    );
+
+    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
+    expect(fs.readFileSync).toBeCalledWith(cachePath, 'utf8');
+    expect(writeFileAtomic.sync).not.toBeCalled();
+
+    // Don't read from the cache when `config.cache` is false.
+    jest.resetModuleRegistry();
+    reset();
+    mockFs = mockFsCopy;
+    transformConfig.cache = false;
+    scriptTransformer = new ScriptTransformer(transformConfig);
+    scriptTransformer.transform(
+      filename,
+      getCoverageOptions(),
+      mockFs[filename],
+    );
+
+    expect(fs.readFileSync).not.toHaveBeenCalled();
+    expect(writeFileAtomic.sync).toBeCalled();
+  });
+
+  it('reads values from the cache when the file contains colons', () => {
+    const transformConfig: Config.ProjectConfig = {
+      ...config,
+      transform: [['\\.js$', 'test_preprocessor', {}]],
+    };
+    let scriptTransformer = new ScriptTransformer(transformConfig);
+    scriptTransformer.transform(
+      '/fruits/banana:colon.js',
+      getCoverageOptions(),
+      mockFs['/fruits/banana:colon.js'],
+    );
+
+    const cachePath = getCachePath(mockFs, config);
+    expect(writeFileAtomic.sync).toBeCalled();
+    expect(writeFileAtomic.sync.mock.calls[0][0]).toBe(cachePath);
+
+    // Cache the state in `mockFsCopy`
+    const mockFsCopy = mockFs;
+    jest.resetModuleRegistry();
+    reset();
+
+    // Restore the cached fs
+    mockFs = mockFsCopy;
+    scriptTransformer = new ScriptTransformer(transformConfig);
+    scriptTransformer.transform(
+      '/fruits/banana:colon.js',
+      getCoverageOptions(),
+      mockFs['/fruits/banana:colon.js'],
+    );
 
     expect(fs.readFileSync).toHaveBeenCalledTimes(2);
     expect(fs.readFileSync).toBeCalledWith('/fruits/banana:colon.js', 'utf8');
@@ -757,7 +798,11 @@ describe('ScriptTransformer', () => {
       transform: [['\\.js$', 'test_preprocessor', {}]],
     });
 
-    scriptTransformer.transform('/fruits/banana.js', getCoverageOptions());
+    scriptTransformer.transform(
+      filename,
+      getCoverageOptions(),
+      mockFs[filename],
+    );
 
     const anotherScriptTransformer = new ScriptTransformer({
       ...config,
@@ -765,12 +810,13 @@ describe('ScriptTransformer', () => {
     });
 
     anotherScriptTransformer.transform(
-      '/fruits/banana.js',
+      filename,
       getCoverageOptions(),
+      mockFs[filename],
     );
 
     expect(fs.readFileSync).toHaveBeenCalledTimes(2);
-    expect(fs.readFileSync).toBeCalledWith('/fruits/banana.js', 'utf8');
+    expect(fs.readFileSync).toBeCalledWith(filename, 'utf8');
   });
 
   it('preload transformer when using `preloadTransformer`', () => {
@@ -781,9 +827,7 @@ describe('ScriptTransformer', () => {
 
     expect(Array.from(scriptTransformer._transformCache.entries())).toEqual([]);
 
-    expect(
-      scriptTransformer.preloadTransformer('/fruits/banana.js'),
-    ).toBeUndefined();
+    expect(scriptTransformer.preloadTransformer(filename)).toBeUndefined();
 
     expect(Array.from(scriptTransformer._transformCache.entries())).toEqual([
       ['test_preprocessor', expect.any(Object)],

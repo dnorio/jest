@@ -385,12 +385,10 @@ export default class ScriptTransformer {
     filename: Config.Path,
     options: Options,
     transformOptions: TransformOptions,
-    fileSource?: string,
+    fileSource: string,
   ): TransformResult {
     const {isCoreModule, isInternalModule} = options;
-    const content = stripShebang(
-      fileSource || fs.readFileSync(filename, 'utf8'),
-    );
+    const content = stripShebang(fileSource);
 
     let code = content;
     let sourceMapPath: string | null = null;

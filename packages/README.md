@@ -1,7 +1,7 @@
 ## @dnorio/jest
 Single jest entrypoint package for easily testing unreleased features.
 
-I created this mainly to be able to easily use the jest [mock-esm version](https://github.com/SimenB/jest/tree/mock-esm) in my projects.
+I created this mainly to be able to easily use the jest [mock-esm version](https://github.com/facebook/jest/pull/10976) in my projects.
 
 ### Usage
 1. Install jest at your project (Tested with 27.0.6);
